@@ -10,6 +10,9 @@ module.exports = (redisConnectionOpts, opts = {})->
 			MAX_LOCK_WAIT_TIME: opts.MAX_LOCK_WAIT_TIME || 10000 # 10s maximum time to spend trying to get the lock
 			LOCK_TTL: opts.LOCK_TTL || 10 # seconds
 
+			forceTakeLock: (key, callback = (err)->)->
+				rclient.set key, "locked", "EX", @LOCK_TTL, callback
+
 			tryLock : (key, callback = (err, gotLock) ->) ->
 				rclient.set key, "locked", "EX", @LOCK_TTL, "NX", (err, gotLock)->
 					return callback(err) if err?

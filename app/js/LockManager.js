@@ -5,13 +5,22 @@
 
   redis = require("redis-sharelatex");
 
-  module.exports = function(redisConnectionOpts) {
+  module.exports = function(redisConnectionOpts, opts) {
     var LockManager, rclient;
+    if (opts == null) {
+      opts = {};
+    }
     rclient = redis.createClient(redisConnectionOpts);
     LockManager = {
-      LOCK_TEST_INTERVAL: 50,
-      MAX_LOCK_WAIT_TIME: 10000,
-      LOCK_TTL: 10,
+      LOCK_TEST_INTERVAL: opts.LOCK_TEST_INTERVAL || 50,
+      MAX_LOCK_WAIT_TIME: opts.MAX_LOCK_WAIT_TIME || 10000,
+      LOCK_TTL: opts.LOCK_TTL || 10,
+      forceTakeLock: function(key, callback) {
+        if (callback == null) {
+          callback = function(err) {};
+        }
+        return rclient.set(key, "locked", "EX", this.LOCK_TTL, callback);
+      },
       tryLock: function(key, callback) {
         if (callback == null) {
           callback = function(err, gotLock) {};

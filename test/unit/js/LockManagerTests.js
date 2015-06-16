@@ -68,6 +68,21 @@
         });
       });
     });
+    describe("forceTakeLock", function() {
+      return describe("when the lock is taken", function() {
+        beforeEach(function() {
+          this.LockManager = this.LockManager();
+          this.rclient.set = sinon.stub().callsArgWith(4, null, null);
+          return this.LockManager.forceTakeLock(this.key, this.callback);
+        });
+        it("should set the lock in redis", function() {
+          return this.rclient.set.calledWith(this.key, "locked", "EX", this.LockManager.LOCK_TTL).should.equal(true);
+        });
+        return it("should call the callback", function() {
+          return this.callback.called.should.equal(true);
+        });
+      });
+    });
     describe("tryLock", function() {
       describe("when the lock is taken", function() {
         beforeEach(function() {
@@ -75,7 +90,7 @@
           this.rclient.set = sinon.stub().callsArgWith(5, null, null);
           return this.LockManager.tryLock(this.key, this.callback);
         });
-        it("should check the lock in redis", function() {
+        it("should set the lock in redis", function() {
           return this.rclient.set.calledWith(this.key, "locked", "EX", this.LockManager.LOCK_TTL, "NX").should.equal(true);
         });
         return it("should return the callback with false", function() {

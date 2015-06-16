@@ -52,6 +52,21 @@ describe "LockManager", ->
 			it "should return the callback with true", ->
 				@callback.calledWith(null, true).should.equal true
 
+	describe "forceTakeLock", ->
+		describe "when the lock is taken", ->
+			beforeEach ->
+				@LockManager = @LockManager()
+				@rclient.set = sinon.stub().callsArgWith(4, null, null)
+				@LockManager.forceTakeLock @key, @callback
+
+			it "should set the lock in redis", ->
+				@rclient.set
+					.calledWith(@key, "locked", "EX", @LockManager.LOCK_TTL)
+					.should.equal true
+
+			it "should call the callback", ->
+				@callback.called.should.equal true
+
 
 	describe "tryLock", ->
 		describe "when the lock is taken", ->
@@ -60,7 +75,7 @@ describe "LockManager", ->
 				@rclient.set = sinon.stub().callsArgWith(5, null, null)
 				@LockManager.tryLock @key, @callback
 
-			it "should check the lock in redis", ->
+			it "should set the lock in redis", ->
 				@rclient.set
 					.calledWith(@key, "locked", "EX", @LockManager.LOCK_TTL, "NX")
 					.should.equal true
