@@ -10,18 +10,28 @@ describe "LockManager", ->
 		@Settings = 		
 			redis:
 				web:{}
+		@rclient = {}
+		@createClientStub = sinon.stub().returns(@rclient)
 		@LockManager = SandboxedModule.require modulePath, requires:
 			"redis-sharelatex":
-				createClient: () => @rclient =
-					auth: sinon.stub()
+				createClient: @createClientStub
 			"settings-sharelatex": @Settings
-
 		@key = "lock-key"
 		@callback = sinon.stub()
+
+	describe "setup", ->
+		it "should pass the redis connection string to redis", (done)->
+			connectionString = "redis-hello@world"
+			@LockManager = @LockManager(connectionString)
+			@createClientStub.calledWith(connectionString).should.equal true
+			done()
+
+
 
 	describe "checkLock", ->
 		describe "when the lock is taken", ->
 			beforeEach ->
+				@LockManager = @LockManager()
 				@rclient.exists = sinon.stub().callsArgWith(1, null, "1")
 				@LockManager.checkLock @key, @callback
 
@@ -35,6 +45,7 @@ describe "LockManager", ->
 
 		describe "when the lock is free", ->
 			beforeEach ->
+				@LockManager = @LockManager()		
 				@rclient.exists = sinon.stub().callsArgWith(1, null, "0")
 				@LockManager.checkLock @key, @callback
 
@@ -45,6 +56,7 @@ describe "LockManager", ->
 	describe "tryLock", ->
 		describe "when the lock is taken", ->
 			beforeEach ->
+				@LockManager = @LockManager()
 				@rclient.set = sinon.stub().callsArgWith(5, null, null)
 				@LockManager.tryLock @key, @callback
 
@@ -58,6 +70,7 @@ describe "LockManager", ->
 
 		describe "when the lock is free", ->
 			beforeEach ->
+				@LockManager = @LockManager()
 				@rclient.set = sinon.stub().callsArgWith(5, null, "OK")
 				@LockManager.tryLock @key, @callback
 
@@ -67,6 +80,7 @@ describe "LockManager", ->
 	describe "deleteLock", ->
 		beforeEach -> 
 			beforeEach ->
+				@LockManager = @LockManager()
 				@rclient.del = sinon.stub().callsArg(1)
 				@LockManager.deleteLock @key, @callback
 
@@ -81,6 +95,7 @@ describe "LockManager", ->
 	describe "getLock", ->
 		describe "when the lock is not taken", ->
 			beforeEach (done) ->
+				@LockManager = @LockManager()
 				@LockManager.tryLock = sinon.stub().callsArgWith(1, null, true)
 				@LockManager.getLock @key, (args...) =>
 					@callback(args...)
@@ -99,6 +114,7 @@ describe "LockManager", ->
 
 		describe "when the lock is initially set", ->
 			beforeEach (done) ->
+				@LockManager = @LockManager()
 				startTime = Date.now()
 				@LockManager.LOCK_TEST_INTERVAL = 5
 				@LockManager.tryLock = (doc_id, callback = (error, isFree) ->) ->
@@ -120,6 +136,7 @@ describe "LockManager", ->
 
 		describe "when the lock times out", ->
 			beforeEach (done) ->
+				@LockManager = @LockManager()
 				time = Date.now()
 				@LockManager.MAX_LOCK_WAIT_TIME = 5
 				@LockManager.tryLock = sinon.stub().callsArgWith(1, null, false)
@@ -133,6 +150,7 @@ describe "LockManager", ->
 	describe "runWithLock", ->
 		describe "with successful run", ->
 			beforeEach ->
+				@LockManager = @LockManager()
 				@runner = (releaseLock = (error) ->) ->
 					releaseLock()
 				sinon.spy @, "runner"
@@ -158,6 +176,7 @@ describe "LockManager", ->
 
 		describe "when the runner function returns an error", ->
 			beforeEach ->
+				@LockManager = @LockManager()
 				@error = new Error("oops")
 				@runner = (releaseLock = (error) ->) =>
 					releaseLock(@error)

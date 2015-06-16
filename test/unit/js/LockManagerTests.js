@@ -21,16 +21,12 @@
           web: {}
         }
       };
+      this.rclient = {};
+      this.createClientStub = sinon.stub().returns(this.rclient);
       this.LockManager = SandboxedModule.require(modulePath, {
         requires: {
           "redis-sharelatex": {
-            createClient: (function(_this) {
-              return function() {
-                return _this.rclient = {
-                  auth: sinon.stub()
-                };
-              };
-            })(this)
+            createClient: this.createClientStub
           },
           "settings-sharelatex": this.Settings
         }
@@ -38,9 +34,19 @@
       this.key = "lock-key";
       return this.callback = sinon.stub();
     });
+    describe("setup", function() {
+      return it("should pass the redis connection string to redis", function(done) {
+        var connectionString;
+        connectionString = "redis-hello@world";
+        this.LockManager = this.LockManager(connectionString);
+        this.createClientStub.calledWith(connectionString).should.equal(true);
+        return done();
+      });
+    });
     describe("checkLock", function() {
       describe("when the lock is taken", function() {
         beforeEach(function() {
+          this.LockManager = this.LockManager();
           this.rclient.exists = sinon.stub().callsArgWith(1, null, "1");
           return this.LockManager.checkLock(this.key, this.callback);
         });
@@ -53,6 +59,7 @@
       });
       return describe("when the lock is free", function() {
         beforeEach(function() {
+          this.LockManager = this.LockManager();
           this.rclient.exists = sinon.stub().callsArgWith(1, null, "0");
           return this.LockManager.checkLock(this.key, this.callback);
         });
@@ -64,6 +71,7 @@
     describe("tryLock", function() {
       describe("when the lock is taken", function() {
         beforeEach(function() {
+          this.LockManager = this.LockManager();
           this.rclient.set = sinon.stub().callsArgWith(5, null, null);
           return this.LockManager.tryLock(this.key, this.callback);
         });
@@ -76,6 +84,7 @@
       });
       return describe("when the lock is free", function() {
         beforeEach(function() {
+          this.LockManager = this.LockManager();
           this.rclient.set = sinon.stub().callsArgWith(5, null, "OK");
           return this.LockManager.tryLock(this.key, this.callback);
         });
@@ -87,6 +96,7 @@
     describe("deleteLock", function() {
       return beforeEach(function() {
         beforeEach(function() {
+          this.LockManager = this.LockManager();
           this.rclient.del = sinon.stub().callsArg(1);
           return this.LockManager.deleteLock(this.key, this.callback);
         });
@@ -101,6 +111,7 @@
     describe("getLock", function() {
       describe("when the lock is not taken", function() {
         beforeEach(function(done) {
+          this.LockManager = this.LockManager();
           this.LockManager.tryLock = sinon.stub().callsArgWith(1, null, true);
           return this.LockManager.getLock(this.key, (function(_this) {
             return function() {
@@ -124,6 +135,7 @@
       describe("when the lock is initially set", function() {
         beforeEach(function(done) {
           var startTime;
+          this.LockManager = this.LockManager();
           startTime = Date.now();
           this.LockManager.LOCK_TEST_INTERVAL = 5;
           this.LockManager.tryLock = function(doc_id, callback) {
@@ -156,6 +168,7 @@
       return describe("when the lock times out", function() {
         beforeEach(function(done) {
           var time;
+          this.LockManager = this.LockManager();
           time = Date.now();
           this.LockManager.MAX_LOCK_WAIT_TIME = 5;
           this.LockManager.tryLock = sinon.stub().callsArgWith(1, null, false);
@@ -176,6 +189,7 @@
     return describe("runWithLock", function() {
       describe("with successful run", function() {
         beforeEach(function() {
+          this.LockManager = this.LockManager();
           this.runner = function(releaseLock) {
             if (releaseLock == null) {
               releaseLock = function(error) {};
@@ -202,6 +216,7 @@
       });
       return describe("when the runner function returns an error", function() {
         beforeEach(function() {
+          this.LockManager = this.LockManager();
           this.error = new Error("oops");
           this.runner = (function(_this) {
             return function(releaseLock) {
