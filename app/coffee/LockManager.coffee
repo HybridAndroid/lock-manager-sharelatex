@@ -1,14 +1,14 @@
 Settings = require "settings-sharelatex"
 redis = require("redis-sharelatex")
 
-module.exports = (redisConnectionOpts)->
+module.exports = (redisConnectionOpts, opts = {})->
 	
 		rclient = redis.createClient(redisConnectionOpts)
 
 		LockManager =
-			LOCK_TEST_INTERVAL: 50 # 50ms between each test of the lock
-			MAX_LOCK_WAIT_TIME: 10000 # 10s maximum time to spend trying to get the lock
-			LOCK_TTL: 10 # seconds
+			LOCK_TEST_INTERVAL: opts.LOCK_TEST_INTERVAL || 50 # 50ms between each test of the lock
+			MAX_LOCK_WAIT_TIME: opts.MAX_LOCK_WAIT_TIME || 10000 # 10s maximum time to spend trying to get the lock
+			LOCK_TTL: opts.LOCK_TTL || 10 # seconds
 
 			tryLock : (key, callback = (err, gotLock) ->) ->
 				rclient.set key, "locked", "EX", @LOCK_TTL, "NX", (err, gotLock)->
