@@ -1,6 +1,6 @@
 {
   "name": "lock-manager-sharelatex",
-  "version": "0.0.5",
+  "version": "0.0.8",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "coffee-script": "^1.7.3",
-    "redis-sharelatex": "~0.0.4",
+    "ioredis": "^1.5.0",
     "settings-sharelatex": "git+https://github.com/sharelatex/settings-sharelatex.git#v1.0.0"
   },
   "devDependencies": {

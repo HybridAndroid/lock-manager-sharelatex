@@ -3,7 +3,7 @@
 
   Settings = require("settings-sharelatex");
 
-  redis = require("redis-sharelatex");
+  redis = require("ioredis");
 
   module.exports = function(redisConnectionOpts, opts) {
     var LockManager, rclient;

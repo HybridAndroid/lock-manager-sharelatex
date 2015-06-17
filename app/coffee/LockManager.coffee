@@ -1,5 +1,5 @@
 Settings = require "settings-sharelatex"
-redis = require("redis-sharelatex")
+redis = require("ioredis")
 
 module.exports = (redisConnectionOpts, opts = {})->
 	
